@@ -1,18 +1,10 @@
 #[path = "day2/model.rs"]
 mod day2;
 
-use day2::{min_required_counts, parse_game, Game};
+use day2::{min_required_counts, parse_game, RGBCounts};
 
-fn is_valid_game(game: &Game, r: i32, g: i32, b: i32) -> bool {
-    let counts = min_required_counts(game);
-    let is_valid = counts.r <= r && counts.g <= g && counts.b <= b;
-    println!(
-        "[{}] #{} - {:?}",
-        if is_valid { "X" } else { "_" },
-        game.id,
-        (counts.r, counts.g, counts.b)
-    );
-    is_valid
+fn power(counts: RGBCounts) -> i32 {
+    counts.r * counts.g * counts.b
 }
 
 #[test]
@@ -24,28 +16,27 @@ fn run_test_case() {
         "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
         "Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green",
     ];
-    let games = lines
+    let power_sum: i32 = lines
         .iter()
         .map(|line| {
             let error_msg = format!("Failed to parse into game: \"{}\"", line);
             parse_game(line).expect(&error_msg)
         })
-        .filter(|game| is_valid_game(game, 12, 13, 14));
-    let id_total: i32 = games.map(|g| g.id).sum();
-    assert_eq!(id_total, 8)
+        .map(|g| min_required_counts(&g))
+        .map(|c| power(c))
+        .sum();
+    assert_eq!(power_sum, 2286)
 }
 
 pub fn run() {
     let lines = include_str!("../resources/problem_2.txt").lines();
-
-    let valid_games = lines
+    let power_sum: i32 = lines
         .map(|line| {
             let error_msg = format!("Failed to parse into game: \"{}\"", line);
             parse_game(line).expect(&error_msg)
         })
-        .filter(|game| is_valid_game(game, 12, 13, 14));
-
-    let id_total: i32 = valid_games.clone().map(|g| g.id).sum();
-
-    println!("Sum of valid game ids: {id_total}");
+        .map(|g| min_required_counts(&g))
+        .map(|c| power(c))
+        .sum();
+    println!("Power Sum: {power_sum}");
 }
