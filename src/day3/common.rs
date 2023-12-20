@@ -112,7 +112,7 @@ pub fn produce_schematic() -> Schematic {
     }
 }
 
-fn does_border(g: &CellGroup, cell: &Cell) -> bool {
+pub fn does_border(g: &CellGroup, cell: &Cell) -> bool {
     g.cells.iter().any(|gc| {
         let x_dist = gc.x.abs_diff(cell.x);
         let y_dist = gc.y.abs_diff(cell.y);
