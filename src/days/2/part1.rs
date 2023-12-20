@@ -1,7 +1,6 @@
-#[path = "day2/model.rs"]
-mod day2;
+mod common;
 
-use day2::{min_required_counts, parse_game, Game};
+use common::{min_required_counts, parse_game, Game};
 
 fn is_valid_game(game: &Game, r: i32, g: i32, b: i32) -> bool {
     let counts = min_required_counts(game);
@@ -36,7 +35,7 @@ fn run_test_case() {
 }
 
 pub fn run() {
-    let lines = include_str!("../resources/problem_2.txt").lines();
+    let lines = include_str!("../../../resources/problem_2.txt").lines();
 
     let valid_games = lines
         .map(|line| {

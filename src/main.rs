@@ -1,5 +1,6 @@
-mod day3_part2;
+#[path = "days/1/part2.rs"]
+mod current_problem;
 
 fn main() {
-    day3_part2::run();
+    current_problem::run();
 }

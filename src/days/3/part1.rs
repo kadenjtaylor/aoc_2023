@@ -1,4 +1,3 @@
-#[path = "day3/common.rs"]
 mod common;
 
 use common::CellGroup;

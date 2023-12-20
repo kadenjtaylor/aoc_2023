@@ -71,7 +71,7 @@ fn test() {
 }
 
 pub fn run() {
-    let lines = include_str!("../resources/problem_1.txt").lines();
+    let lines = include_str!("../../../resources/problem_1.txt").lines();
 
     let updated: i32 = lines.map(|line| extract(line)).sum();
 

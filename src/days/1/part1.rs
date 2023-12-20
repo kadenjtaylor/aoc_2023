@@ -15,7 +15,7 @@ fn extract_number(s: &str) -> Option<i8> {
 }
 
 pub fn run() {
-    let lines = include_str!("../resources/problem_1.txt").lines();
+    let lines = include_str!("../../../resources/problem_1.txt").lines();
     let sum: i32 = lines
         .map(|s| extract_number(s))
         .flatten() // this is only okay because we know all the lines have a first/last digit

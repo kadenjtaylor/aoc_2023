@@ -12,7 +12,7 @@ pub struct CellGroup {
 }
 
 fn retrieve_cells() -> Vec<Cell> {
-    let lines = include_str!("../../resources/problem_3.txt").lines();
+    let lines = include_str!("../../../resources/problem_3.txt").lines();
     let mut cells: Vec<Cell> = vec![];
     for (num, line) in lines.enumerate() {
         line.chars().enumerate().for_each(|(char_num, c)| {

@@ -1,7 +1,6 @@
-#[path = "day2/model.rs"]
-mod day2;
+mod common;
 
-use day2::{min_required_counts, parse_game, RGBCounts};
+use common::{min_required_counts, parse_game, RGBCounts};
 
 fn power(counts: RGBCounts) -> i32 {
     counts.r * counts.g * counts.b
@@ -29,7 +28,7 @@ fn run_test_case() {
 }
 
 pub fn run() {
-    let lines = include_str!("../resources/problem_2.txt").lines();
+    let lines = include_str!("../../../resources/problem_2.txt").lines();
     let power_sum: i32 = lines
         .map(|line| {
             let error_msg = format!("Failed to parse into game: \"{}\"", line);
