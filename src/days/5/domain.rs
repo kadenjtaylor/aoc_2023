@@ -42,20 +42,25 @@ fn empty_almanac() -> Almanac {
     }
 }
 
-pub fn retrieve_from_file() -> Almanac {
+pub fn retrieve_from_file(seed_ranges: bool) -> Almanac {
     let mut alm = empty_almanac();
     let chunks = include_str!("../../../resources/almanac.txt").split("\n\n");
     chunks.enumerate().for_each(|(index, chunk)| {
-        println!("{chunk}");
         if index == 0 {
             let mut chunklets = chunk.split(":");
             chunklets.next(); // skip "seeds:"
             if let Some(c) = chunklets.next() {
-                c.lines().for_each(|line| {
-                    line.split_whitespace()
-                        .flat_map(|s| s.parse::<i64>())
-                        .for_each(|n| alm.seeds.push(n))
-                });
+                let nums = c.split_whitespace().flat_map(|i| i.parse::<i64>());
+                if seed_ranges {
+                    nums.collect::<Vec<i64>>().chunks(2).for_each(|c| {
+                        println!("Adding range {:?}", c.to_vec());
+                        for i in c[0]..c[0] + c[1] {
+                            alm.seeds.push(i);
+                        }
+                    })
+                } else {
+                    nums.for_each(|n| alm.seeds.push(n));
+                }
             }
         } else {
             let mappings = chunk
@@ -85,12 +90,6 @@ pub fn retrieve_from_file() -> Almanac {
     alm
 }
 
-pub fn closest_location(alm: Almanac) -> i64 {
-    let locs = locations(&alm);
-    println!("Ending locations: {:?}", locs);
-    *locs.iter().min().expect("Empty Locations")
-}
-
 fn convert_by(i: i64, conversions: &Vec<Mapping>) -> i64 {
     let mut stuff = conversions.iter().filter(|&c| c.source_range.contains(&i));
     if let Some(m) = stuff.next() {
@@ -101,9 +100,8 @@ fn convert_by(i: i64, conversions: &Vec<Mapping>) -> i64 {
     }
 }
 
-fn locations(alm: &Almanac) -> Vec<i64> {
-    alm.seeds
-        .iter()
+fn location_from_seed(seed_num: &i64, alm: &Almanac) -> i64 {
+    Some(seed_num)
         .map(|&seed| convert_by(seed, &alm.seed_to_soil))
         .map(|soil| convert_by(soil, &alm.soil_to_fertilizer))
         .map(|fertilizer| convert_by(fertilizer, &alm.fertilizer_to_water))
@@ -111,5 +109,26 @@ fn locations(alm: &Almanac) -> Vec<i64> {
         .map(|light| convert_by(light, &alm.light_to_temperature))
         .map(|temperature| convert_by(temperature, &alm.temperature_to_humidity))
         .map(|humidity| convert_by(humidity, &alm.humidity_to_location))
-        .collect::<Vec<i64>>()
+        .expect("number fell out of the pipeline")
+}
+
+// TODO: This solution takes FOREVER... come back and fix this
+pub fn closest_location(alm: &Almanac) -> Option<i64> {
+    let mut lowest = i64::MAX;
+    let denom = alm.seeds.len() / 100;
+    for (index, seed) in alm.seeds.iter().enumerate() {
+        let attempt = location_from_seed(seed, alm);
+        if attempt < lowest {
+            println!("New lowest: {} @ {}", attempt, index);
+            lowest = attempt;
+        }
+        if index % denom == 0 && index != 0 {
+            println!("Checkpoint: %{}", (index * 100) / alm.seeds.len());
+        }
+    }
+    if lowest == i64::MAX {
+        None
+    } else {
+        Some(lowest)
+    }
 }

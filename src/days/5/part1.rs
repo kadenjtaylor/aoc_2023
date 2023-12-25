@@ -13,12 +13,14 @@ fn run_example() {
         temperature_to_humidity: mappings(vec![(0, 69, 1), (1, 0, 69)]),
         humidity_to_location: mappings(vec![(60, 56, 37), (56, 93, 4)]),
     };
-    let loc = closest_location(test_almanac);
-    assert_eq!(loc, 35);
+    let loc = closest_location(&test_almanac);
+    assert_eq!(loc, Some(35));
 }
 
 pub fn run() {
-    let almanac = domain::retrieve_from_file();
-    let loc = domain::closest_location(almanac);
-    println!("Closest location is: {}", loc);
+    let use_seed_ranges = true;
+    let almanac = domain::retrieve_from_file(use_seed_ranges);
+    println!("Seeds collected: {}", almanac.seeds.len());
+    let loc = domain::closest_location(&almanac);
+    println!("Closest location is: {:?}", loc);
 }
