@@ -34,7 +34,7 @@ fn parse_network<'a>(lines: impl Iterator<Item = &'a str>) -> Network<'a> {
 }
 
 fn parse_node(line: &str) -> Option<Node<'_>> {
-    let regex_def = r"(?<name>[A-Z]{3}) \= \((?<left>[A-Z]{3}), (?<right>[A-Z]{3})\)";
+    let regex_def = r"(?<name>[A-Z0-9]{3}) \= \((?<left>[A-Z0-9]{3}), (?<right>[A-Z0-9]{3})\)";
     let r = Regex::new(regex_def);
     let a = r.unwrap();
     let caps = a.captures(line);
@@ -71,12 +71,15 @@ fn next(p: &mut Pattern) -> &Move {
     }
 }
 
-fn run_pattern<'a>(map: &'a Map<'a>, start: &'a str, end: &'a str) -> Vec<&'a str> {
+fn run_pattern<'a, F>(map: &'a Map<'a>, start: &'a str, is_end: F) -> Vec<&'a str>
+where
+    F: Fn(&str) -> bool,
+{
     // println!("Running from {} to {}...", start, end);
     let mut pattern = parse_pattern(map.sequence);
     let mut path = vec![];
     let mut current_name = start;
-    while current_name != end {
+    while !is_end(current_name) {
         let node_ptr = map.network.nodes.get(current_name).unwrap();
         path.push(current_name);
         // println!("Pushing {}, ({})", current_name, current_name.len());
@@ -124,8 +127,8 @@ fn parse_map(map_data: &str) -> Map {
     }
 }
 
-fn num_steps(map_data: &str) -> usize {
-    run_pattern(&parse_map(map_data), "AAA", "ZZZ").len() - 1
+fn num_steps_to_zzz(map_data: &str) -> usize {
+    run_pattern(&parse_map(map_data), "AAA", |s| s == "ZZZ").len() - 1
 }
 
 #[test]
@@ -140,7 +143,7 @@ fn example_1() {
     GGG = (GGG, GGG)
     ZZZ = (ZZZ, ZZZ)";
     let map = parse_map(map_data);
-    let p = run_pattern(&map, "AAA", "ZZZ");
+    let p = run_pattern(&map, "AAA", |s| s == "ZZZ");
     assert_eq!(vec!["AAA", "CCC", "ZZZ"], p)
 }
 
@@ -151,11 +154,11 @@ fn example_2() {
     AAA = (BBB, BBB)
     BBB = (AAA, ZZZ)
     ZZZ = (ZZZ, ZZZ)";
-    assert_eq!(num_steps(map_data), 6)
+    assert_eq!(num_steps_to_zzz(map_data), 6)
 }
 
 pub fn run() {
     let map_data = include_str!("../../../resources/network_map.txt");
-    let steps = num_steps(map_data);
-    println!("Found a solution in {} steps!", steps);
+    let n = num_steps_to_zzz(map_data);
+    println!("Found a solution in {:?} steps!", n);
 }
