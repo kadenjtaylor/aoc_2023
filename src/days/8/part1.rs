@@ -3,10 +3,10 @@ use std::{collections::HashMap, fmt::Display};
 use regex::Regex;
 
 #[derive(Debug)]
-struct Node<'a> {
-    name: &'a str,
-    left: &'a str,
-    right: &'a str,
+pub struct Node<'a> {
+    pub name: &'a str,
+    pub left: &'a str,
+    pub right: &'a str,
 }
 
 impl Display for Node<'_> {
@@ -19,8 +19,8 @@ impl Display for Node<'_> {
 }
 
 #[derive(Debug)]
-struct Network<'a> {
-    nodes: HashMap<&'a str, Node<'a>>,
+pub struct Network<'a> {
+    pub nodes: HashMap<&'a str, Node<'a>>,
 }
 
 fn parse_network<'a>(lines: impl Iterator<Item = &'a str>) -> Network<'a> {
@@ -47,18 +47,18 @@ fn parse_node(line: &str) -> Option<Node<'_>> {
 }
 
 #[derive(Debug)]
-enum Move {
+pub enum Move {
     L,
     R,
 }
 
 #[derive(Debug)]
-struct Pattern {
+pub struct Pattern {
     current: usize,
     moves: Vec<Move>,
 }
 
-fn next(p: &mut Pattern) -> &Move {
+pub fn next(p: &mut Pattern) -> &Move {
     match p.moves.get(p.current + 1) {
         Some(m) => {
             p.current = p.current + 1;
@@ -71,7 +71,7 @@ fn next(p: &mut Pattern) -> &Move {
     }
 }
 
-fn run_pattern<'a, F>(map: &'a Map<'a>, start: &'a str, is_end: F) -> Vec<&'a str>
+pub fn run_pattern<'a, F>(map: &'a Map<'a>, start: &'a str, is_end: F) -> Vec<&'a str>
 where
     F: Fn(&str) -> bool,
 {
@@ -93,7 +93,7 @@ where
     path
 }
 
-fn parse_pattern(pattern: &str) -> Pattern {
+pub fn parse_pattern(pattern: &str) -> Pattern {
     let mut result = vec![];
     for c in pattern.chars() {
         result.push(match c {
@@ -108,12 +108,12 @@ fn parse_pattern(pattern: &str) -> Pattern {
     }
 }
 #[derive(Debug)]
-struct Map<'a> {
-    sequence: &'a str,
-    network: Network<'a>,
+pub struct Map<'a> {
+    pub sequence: &'a str,
+    pub network: Network<'a>,
 }
 
-fn parse_map(map_data: &str) -> Map {
+pub fn parse_map(map_data: &str) -> Map {
     // for (i, line) in map_data.lines().enumerate() {}
     let mut pattern = "";
     let mut chunks = map_data.lines();
