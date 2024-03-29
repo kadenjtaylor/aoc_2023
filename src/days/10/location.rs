@@ -6,6 +6,13 @@ pub struct Location {
 
 pub type Edge = (Location, Location);
 
+pub fn location(x: usize, y: usize) -> Location {
+    Location {
+        x: x as i64,
+        y: y as i64,
+    }
+}
+
 pub fn up(loc: &Location) -> Edge {
     (
         loc.clone(),

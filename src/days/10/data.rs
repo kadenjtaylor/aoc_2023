@@ -17,3 +17,15 @@ pub fn get_complex_data() -> &'static str {
 pub fn get_file_data() -> &'static str {
     include_str!("../../../resources/pipe_grid.txt")
 }
+
+pub fn get_part2_example() -> &'static str {
+    "..........     .
+    .S-------7.
+    .|F-----7|.
+    .||.....||.
+    .||.....||.
+    .|L-7.F-J|.
+    .|..|.|..|.
+    .L--J.L--J.
+    ..........."
+}

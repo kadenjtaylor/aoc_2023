@@ -12,7 +12,7 @@ pub fn run() {
         .for_each(|l| println!("{}", l));
     println!("Parsing grid...");
     let grid = parse_grid(data);
-    println!("Found a grid of {}x{}", grid.row_max, grid.column_max);
+    println!("Found a grid of {}x{}", grid.num_rows, grid.num_columns);
     println!("Tiles: {}", grid.tiles.len());
     println!("Edges: {}", grid.edges.len());
     println!("S Location: {:?}", grid.s_location);
