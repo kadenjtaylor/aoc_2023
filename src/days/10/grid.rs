@@ -31,6 +31,7 @@ pub fn parse_grid(input: &'static str) -> Grid {
     let mut tiles = HashMap::new();
     let mut edges = HashSet::new();
     let mut s_location = None;
+    let mut on_loop: HashSet<Location> = HashSet::new();
     for (column_index, column_content) in input.lines().rev().enumerate() {
         let trimmed = column_content.trim();
         if column_index > column_max {
@@ -50,8 +51,8 @@ pub fn parse_grid(input: &'static str) -> Grid {
             tiles.insert(loc.clone(), c);
             match find_connections(&loc, c) {
                 Some((e1, e2)) => {
-                    edges.insert(e1);
-                    edges.insert(e2);
+                    edges.insert(e1.clone());
+                    edges.insert(e2.clone());
                 }
                 None => (),
             }
@@ -69,15 +70,13 @@ pub fn parse_grid(input: &'static str) -> Grid {
 pub fn print_tiles(tiles: HashMap<Location, char>, num_rows: usize, num_columns: usize) {
     for y in (0..num_columns).rev() {
         for x in 0..num_rows {
-            print!(
-                "{}",
-                tiles
-                    .get(&Location {
-                        x: x as i64,
-                        y: y as i64
-                    })
-                    .unwrap()
-            );
+             match tiles.get(&Location {
+                x: x as i64,
+                y: y as i64
+            }) {
+                Some(c) => print!("{}",c),
+                None => print!("?")
+            }
         }
         println!();
     }
