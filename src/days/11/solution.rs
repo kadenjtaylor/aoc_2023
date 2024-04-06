@@ -33,57 +33,32 @@ fn empty_columns(grid: &Vec<Vec<char>>) -> Vec<usize> {
         .collect()
 }
 
-fn add_empty_row_at(grid: &mut Vec<Vec<char>>, index: usize) {
-    let row_length = grid.get(0).unwrap().len();
-    let row = vec![EMPTY; row_length];
-    grid.insert(index, row);
-}
-
-fn add_empty_column_at(grid: &mut Vec<Vec<char>>, index: usize) {
-    for row in grid {
-        row.insert(index, EMPTY);
-    }
-}
-
-fn expand(grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let columns = empty_columns(&grid);
-    let rows = emtpy_rows(&grid);
-    println!("Empty Columns: {:?}", columns);
-    println!("Empty Rows: {:?}", rows);
-    let mut temp = grid.clone();
-    let mut column_counter = 0;
-    for column_num in columns {
-        add_empty_column_at(&mut temp, column_num + column_counter);
-        column_counter += 1;
-    }
-    let mut row_counter = 0;
-    for row_num in rows {
-        add_empty_row_at(&mut temp, row_num + row_counter);
-        row_counter += 1;
-    }
-    temp
-}
-
-fn find_galaxies(grid: &Vec<Vec<char>>) -> Vec<(usize, usize)> {
+fn find_galaxies_expanded(grid: &Vec<Vec<char>>, expansion_factor: usize) -> Vec<(usize, usize)> {
     let mut galaxies = vec![];
+    let empty_columns = empty_columns(&grid);
+    let empty_rows = emtpy_rows(&grid);
+    println!("Expanding empty rows: {:?}", empty_rows);
+    println!("Expanding empty columns: {:?}", empty_columns);
     for row in 0..grid.len() {
         for column in 0..grid.get(row).unwrap().len() {
             if *grid.get(row).unwrap().get(column).unwrap() == GALAXY {
-                galaxies.push((row, column));
+                let num_empty_rows = empty_rows.iter().filter(|r_index| r_index < &&row).count()
+                    * (expansion_factor - 1);
+                let num_empty_columns = empty_columns
+                    .iter()
+                    .filter(|r_index| r_index < &&column)
+                    .count()
+                    * (expansion_factor - 1);
+                galaxies.push((row + num_empty_rows, column + num_empty_columns));
             }
         }
     }
     galaxies
 }
 
-fn parse(data: &str) -> GalaxyMap {
+fn parse(data: &str, expansion_factor: usize) -> GalaxyMap {
     let grid: Vec<Vec<char>> = data.lines().map(|row| row.chars().collect()).collect();
-    // print_grid(&grid);
-
-    let gravity_expanded = expand(grid);
-    // print_grid(&gravity_expanded);
-
-    let galaxies = find_galaxies(&gravity_expanded);
+    let galaxies = find_galaxies_expanded(&grid, expansion_factor);
     println!("Found {} galaxies.", galaxies.len());
 
     GalaxyMap {
@@ -97,7 +72,7 @@ fn taxicab_distance(a: &(usize, usize), b: &(usize, usize)) -> usize {
 
 pub fn run() {
     let data = data::from_file();
-    let galaxy_map = parse(data);
+    let galaxy_map = parse(data, 1000000);
     let mut distances: HashMap<(usize, usize), usize> = HashMap::new();
     for a in 0..galaxy_map.galaxy_locations.len() {
         for b in 0..galaxy_map.galaxy_locations.len() {
