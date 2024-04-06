@@ -2,14 +2,14 @@ mod data;
 mod grid;
 
 use location::Direction;
-use std::{collections::{HashMap, HashSet}, os::unix::raw::gid_t};
+use std::collections::{HashMap, HashSet};
 
 use crate::current_problem::grid::{
     location::{self, Location},
     print_tiles,
 };
 
-use self::grid::{location::hop, neighbors, Grid};
+use self::grid::{location::hop, Grid};
 
 fn decorate(grid: &grid::Grid) -> HashMap<Location, char> {
     // Setting up the labels
@@ -33,34 +33,87 @@ fn decorate(grid: &grid::Grid) -> HashMap<Location, char> {
             }
             // mark which tiles are ON the line
             // labels.insert(current.clone(), grid.tiles.get(current).unwrap().clone());
-            let (left, right) = get_perpendicular_locations(last, current);
-            if !labels.contains_key(&left) {
-                labels.insert(left, OUTSIDE);
+            let current_tile = grid.tiles.get(current).expect("Missing tile!");
+            let (inside, outside) = partition_border_locations(last, current, current_tile);
+            for i in inside {
+                if !labels.contains_key(&i) {
+                    labels.insert(i, INSIDE);
+                }
             }
-            if !labels.contains_key(&right) {
-                labels.insert(right, INSIDE);
+            for o in outside {
+                if !labels.contains_key(&o) {
+                    labels.insert(o, OUTSIDE);
+                }
             }
             path.push((current.clone(), next));
         }
     }
-    labels.into_iter().filter(|(loc, c)| loc.x >= 0 && loc.y >= 0 && loc.x < grid.num_rows.try_into().unwrap() && loc.y < grid.num_columns.try_into().unwrap()).collect()
+    labels
+        .into_iter()
+        .filter(|(loc, _)| {
+            loc.x >= 0
+                && loc.y >= 0
+                && loc.x < grid.num_rows.try_into().unwrap()
+                && loc.y < grid.num_columns.try_into().unwrap()
+        })
+        .collect()
 }
 
-fn get_perpendicular_locations(last: &Location, current: &Location) -> (Location, Location) {
-    match location::determine_hop(last, current) {
-        Some(Direction::UP) => (hop(current, Direction::LEFT), hop(current, Direction::RIGHT)),
-        Some(Direction::DOWN) => (hop(current, Direction::RIGHT), hop(current, Direction::LEFT)),
-        Some(Direction::LEFT) => (hop(current, Direction::DOWN), hop(current, Direction::UP)),
-        Some(Direction::RIGHT) => (hop(current, Direction::UP), hop(current, Direction::DOWN)),
-        None => panic!("Invalid hop!"),
-    }
+fn partition_border_locations(
+    last: &Location,
+    current: &Location,
+    tile: &char,
+) -> (Vec<Location>, Vec<Location>) {
+    let mut starboard = vec![];
+    let mut port = vec![];
+    let hop_dir = location::determine_hop(last, current).expect("invalid hop");
+    match (hop_dir, tile) {
+        (Direction::UP, 'F') => {
+            for loc in [Direction::UP, Direction::LEFT].map(|d| hop(current, d)) {
+                port.push(loc);
+            }
+        }
+        (Direction::UP, '7') => {
+            for loc in [Direction::UP, Direction::RIGHT].map(|d| hop(current, d)) {
+                starboard.push(loc);
+            }
+        }
+        (Direction::UP, _) => {
+            starboard.push(hop(current, Direction::RIGHT));
+            port.push(hop(current, Direction::LEFT));
+        }
+        (Direction::DOWN, _) => {
+            starboard.push(hop(current, Direction::LEFT));
+            port.push(hop(current, Direction::RIGHT));
+        }
+        (Direction::LEFT, _) => {
+            starboard.push(hop(current, Direction::UP));
+            port.push(hop(current, Direction::DOWN));
+        }
+        (Direction::RIGHT, _) => {
+            starboard.push(hop(current, Direction::DOWN));
+            port.push(hop(current, Direction::UP));
+        }
+    };
+    (starboard, port)
 }
 
 fn ortho(loc: &Location) -> [Location; 4] {
-    [Direction::UP, Direction::DOWN, Direction::LEFT, Direction::RIGHT].map(|d| hop(loc, d))
+    [
+        Direction::UP,
+        Direction::DOWN,
+        Direction::LEFT,
+        Direction::RIGHT,
+    ]
+    .map(|d| hop(loc, d))
 }
 
-fn checkable(loc: &Location, grid: &Grid, visited: &HashSet<Location>, labels: &HashMap<Location, char>) -> Vec<Location> {
+fn checkable(
+    loc: &Location,
+    grid: &Grid,
+    visited: &HashSet<Location>,
+    labels: &HashMap<Location, char>,
+) -> Vec<Location> {
     ortho(loc)
         .into_iter()
         .filter(|loc| !(labels.get(loc).is_some() && *labels.get(loc).unwrap() == LOOP))
@@ -75,11 +128,13 @@ fn nearest_label(loc: &Location, grid: &Grid, labels: &HashMap<Location, char>) 
     while !tiles_to_check.is_empty() {
         let top = tiles_to_check.pop().unwrap();
         visited.insert(top.clone());
-            match labels.get(&top) {
-                Some(&INSIDE) => return Some(INSIDE),
-                Some(&OUTSIDE) => return Some(OUTSIDE),
-                _ => checkable(&top, grid, &visited, labels).iter().for_each(|l| tiles_to_check.push(l.clone())),
-            }
+        match labels.get(&top) {
+            Some(&INSIDE) => return Some(INSIDE),
+            Some(&OUTSIDE) => return Some(OUTSIDE),
+            _ => checkable(&top, grid, &visited, labels)
+                .iter()
+                .for_each(|l| tiles_to_check.push(l.clone())),
+        }
     }
     return None;
 }
@@ -90,7 +145,10 @@ pub fn fill_missing_tiles(labels: HashMap<Location, char>, grid: &Grid) -> HashM
     let mut num_filled = 0;
     for y in (0..grid.num_columns).rev() {
         for x in 0..grid.num_rows {
-            let loc = Location { x:x as i64, y:y as i64 };
+            let loc = Location {
+                x: x as i64,
+                y: y as i64,
+            };
             match labels.get(&loc) {
                 Some(_) => {
                     num_ignored += 1;
@@ -99,7 +157,7 @@ pub fn fill_missing_tiles(labels: HashMap<Location, char>, grid: &Grid) -> HashM
                     num_filled += 1;
                     let guess = match nearest_label(&loc, grid, &labels) {
                         Some(c) => c,
-                        None => '?' 
+                        None => UNKNOWN,
                     };
                     filled.insert(loc, guess);
                 }
@@ -113,36 +171,38 @@ pub fn fill_missing_tiles(labels: HashMap<Location, char>, grid: &Grid) -> HashM
 const INSIDE: char = 'I';
 const OUTSIDE: char = 'O';
 const LOOP: char = '.';
-
+const UNKNOWN: char = '?';
 
 fn flip(c: &char) -> char {
     match c {
         &INSIDE => OUTSIDE,
         &OUTSIDE => INSIDE,
-        &a => a
+        &a => a,
     }
 }
 
-fn flip_labels_if_necessary(labels: &HashMap<Location, char>) -> HashMap<Location, char>{
+fn flip_labels_if_necessary(labels: &HashMap<Location, char>) -> HashMap<Location, char> {
     // find the first label touching the border
     let choices: Vec<char> = labels
         .iter()
         .flat_map(|(loc, &c)| {
-            if (loc.x == 0 || loc.y == 0) && c != LOOP {
+            if (loc.x == 0 || loc.y == 0) && c != LOOP && c != UNKNOWN {
                 vec![c]
             } else {
                 vec![]
             }
-        }).collect();
+        })
+        .collect();
     let correct_labels = match choices.first().unwrap() {
-        &OUTSIDE => {
-            labels.clone()
-        },
+        &OUTSIDE => labels.clone(),
         &INSIDE => {
             println!("Flipping INSIDE/OUTSIDE labels");
-            labels.iter().map(|(loc, c)| (loc.clone(), flip(c))).collect()
-        },
-        _ => panic!("SOMETHING HAS GONE TERRIBLY WRONG")
+            labels
+                .iter()
+                .map(|(loc, c)| (loc.clone(), flip(c)))
+                .collect()
+        }
+        _ => panic!("Not enough known tiles to establish INSIDE/OUTSIDE"),
     };
     correct_labels
 }
@@ -164,13 +224,20 @@ pub fn run() {
     // TODO: Use decoration to fill the rest of the question marks
     let filler = fill_missing_tiles(labels.clone(), &grid);
     labels.extend(filler);
-    print_tiles(labels.clone(), grid.num_rows, grid.num_columns);
     let flipped = flip_labels_if_necessary(&labels);
+    print_tiles(flipped.clone(), grid.num_rows, grid.num_columns);
     let num_inside = flipped.iter().filter(|(_, &c)| c == INSIDE).count();
     let num_outside = flipped.iter().filter(|(_, &c)| c == OUTSIDE).count();
     let num_loop = flipped.iter().filter(|(_, &c)| c == LOOP).count();
-    let num_unknown = flipped.iter().filter(|(_, &c)| c == '?').count();
-    println!("Inside: {}, Outside: {}, Loop: {}, Unknown: {}, Total: {}", num_inside, num_outside, num_loop, num_unknown,  num_inside + num_outside + num_loop + num_unknown);
+    let num_unknown = flipped.iter().filter(|(_, &c)| c == UNKNOWN).count();
+    println!(
+        "Inside: {}, Outside: {}, Loop: {}, Unknown: {}, Total: {}",
+        num_inside,
+        num_outside,
+        num_loop,
+        num_unknown,
+        num_inside + num_outside + num_loop + num_unknown
+    );
 }
 
 // SO CLOSE

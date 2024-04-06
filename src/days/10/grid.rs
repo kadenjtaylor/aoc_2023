@@ -31,7 +31,6 @@ pub fn parse_grid(input: &'static str) -> Grid {
     let mut tiles = HashMap::new();
     let mut edges = HashSet::new();
     let mut s_location = None;
-    let mut on_loop: HashSet<Location> = HashSet::new();
     for (column_index, column_content) in input.lines().rev().enumerate() {
         let trimmed = column_content.trim();
         if column_index > column_max {
