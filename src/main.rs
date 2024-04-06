@@ -1,4 +1,4 @@
-#[path = "days/10/part2.rs"]
+#[path = "days/11/solution.rs"]
 mod current_problem;
 
 fn main() {
