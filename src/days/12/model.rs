@@ -82,7 +82,7 @@ impl Row {
                 damaged_runs: self.damaged_runs.clone(),
             })
             .collect();
-        println!("Generated {} candidate rows", candidate_rows.len());
+        // println!("Generated {} candidate rows", candidate_rows.len());
         let valid_possibilities = candidate_rows.iter().filter(|row| row.is_valid());
         // println!("Valid Possibilities: {}", valid_possibilities);
         valid_possibilities

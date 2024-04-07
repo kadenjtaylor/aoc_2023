@@ -1,7 +1,7 @@
-#[path = "data.rs"]
+#[path = "model.rs"]
 mod model;
 
-use super::model::{DamageRecords, Row};
+use model::{DamageRecords, Row};
 
 fn parse_conditions(s: &str) -> (Vec<char>, &str) {
     let (condition_str, next) = s.split_once(" ").unwrap();
